@@ -1,0 +1,65 @@
+name: CI-CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - 'release/*'
+      - 'feature/*'
+  workflow_dispatch:      # Allows manual run on ANY branch
+    inputs:
+      prerelease:
+        description: "Pre-release type (alpha, beta, rc). Leave empty to skip."
+        required: false
+        default: ""
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      VERSION_PREFIX_MAIN: "1.1"
+      VERSION_PREFIX_RELEASE: "1.0"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set TAG_ID
+        id: tag
+        run: |
+          BRANCH="${GITHUB_REF##*/}"
+          PRERELEASE="${{ github.event.inputs.prerelease }}"
+
+          if [[ "$BRANCH" == "main" ]]; then
+            TAG="${VERSION_PREFIX_MAIN}.${GITHUB_RUN_NUMBER}"
+          elif [[ "$BRANCH" == release/* ]]; then
+            REL="${BRANCH#release/}"
+            TAG="${REL}.${GITHUB_RUN_NUMBER}"
+          else
+            TAG="0.0.${GITHUB_RUN_NUMBER}"
+          fi
+
+          if [[ -n "$PRERELEASE" ]]; then
+            TAG="${TAG}-${PRERELEASE}.1"
+          fi
+
+          echo "TAG_ID=$TAG" >> $GITHUB_OUTPUT
+          echo "Generated TAG: $TAG"
+
+      - name: Build Docker image
+        run: |
+          docker build -t myrepo/myapp:${{ steps.tag.outputs.TAG_ID }} .
+
+      - name: Login to registry
+        run: |
+          echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login myrepo --username ${{ secrets.REGISTRY_USER }} --password-stdin
+
+      - name: Push image
+        run: docker push myrepo/myapp:${{ steps.tag.outputs.TAG_ID }}
+
+      - name: Upload artifact (optional)
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: .
