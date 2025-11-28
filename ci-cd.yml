@@ -1,24 +1,27 @@
-name: CI Pipeline
+name: CI-CD Pipeline
+
 on:
+  push:
+    branches:
+      - 1.0
   pull_request:
     branches:
       - 1.0
-
     types: [opened, synchronize, reopened]
+
   workflow_dispatch:
     inputs:
       log_level:
         description: "Log level"
         required: true
         default: "INFO"
-
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
     env:
-      IMAGE_NAME: ariharasudhanr/ek-devops
-      REGISTRY: docker.io
-      TAG_ID: ${{ vars.DOCKER_IMAGE_PREFIX }}.${{ github.run_number }}
+      IMAGE_NAME: devops/ek-devops
+      REGISTRY: docker.io              # Official Docker Hub registry domain
+      TAG_ID: ${{ vars.DOCKER_IMAGE_PREFIX }}${{ github.run_number }}
 
     steps:
       - name: Checkout code
@@ -41,7 +44,7 @@ jobs:
         with:
           context: .
           push: true
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64,linux/arm64   # Optional: multi-platform build (recommended)
           tags: |
             docker.io/${{ env.IMAGE_NAME }}:${{ env.TAG_ID }}
             docker.io/${{ env.IMAGE_NAME }}:latest

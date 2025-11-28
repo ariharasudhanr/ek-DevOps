@@ -1,0 +1,66 @@
+name: CI-CD Pipeline
+
+on:
+  push:
+    branches:
+      - 1.0
+  workflow_dispatch:
+    inputs:
+      prerelease:
+        description: "Pre-release type (alpha, beta, rc). Leave empty to skip."
+        required: false
+        default: ""
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      TAG: ${{ github.ref_name }} 
+      IS_PRERELEASE: ${{ contains(github.ref_name, 'M') || contains(github.ref_name, 'RC') || contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set TAG_ID
+        id: tag
+        run: |
+          BRANCH="${GITHUB_REF##*/}"
+          PRERELEASE="${{ github.event.inputs.prerelease }}"
+
+          if [[ "$BRANCH" == "main" ]]; then
+            TAG="${VERSION_PREFIX_MAIN}.${GITHUB_RUN_NUMBER}"
+          elif [[ "$BRANCH" == release/* ]]; then
+            REL="${BRANCH#release/}"
+            TAG="${REL}.${GITHUB_RUN_NUMBER}"
+          else
+            TAG="0.0.${GITHUB_RUN_NUMBER}"
+          fi
+
+          if [[ -n "$PRERELEASE" ]]; then
+            TAG="${TAG}-${PRERELEASE}.1"
+          fi
+
+          echo "TAG_ID=$TAG" >> $GITHUB_OUTPUT
+          echo "Generated TAG: $TAG"
+
+      - name: Build Docker image
+        run: |
+          docker build -t myrepo/myapp:${{ steps.tag.outputs.TAG_ID }} .
+
+      - name: Login to registry
+        run: |
+          echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login myrepo --username ${{ secrets.REGISTRY_USER }} --password-stdin
+
+      - name: Push image
+        run: docker push myrepo/myapp:${{ steps.tag.outputs.TAG_ID }}
+
+      - name: Create GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ env.TAG }}
+          name: security ${{ env.TAG }}
+          generateReleaseNotes: true
+          prerelease: ${{ env.IS_PRERELEASE }}
+          allowUpdates: true
+          token: ${{ secrets.GITHUB_TOKEN }}
