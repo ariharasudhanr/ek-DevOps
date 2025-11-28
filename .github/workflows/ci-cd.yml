@@ -21,7 +21,7 @@ jobs:
     env:
       IMAGE_NAME: ariharasudhanr/ek-devops
       REGISTRY: docker.io
-      TAG_ID: ${{ vars.DOCKER_IMAGE_PREFIX }}${{ github.run_number }}
+      TAG_ID: ${{ vars.DOCKER_IMAGE_PREFIX }}.${{ github.run_number }}
 
     steps:
       - name: Checkout code
