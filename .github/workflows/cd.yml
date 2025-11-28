@@ -1,12 +1,11 @@
 name: CD Pipeline
 on:
   push:
-    branches:
-      - 1.0
-
     paths:
       - ".github/workflows/cd.yml"
       - "Dockerfile"
+    branches:
+      - 1.0
 
   workflow_dispatch:
     inputs:
