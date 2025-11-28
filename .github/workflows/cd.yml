@@ -1,13 +1,9 @@
-name: CI-CD Pipeline
-
+name: CD Pipeline
 on:
   push:
     branches:
-      - 1.0
-  pull_request:
-    branches:
-      - 1.0
-    types: [opened, synchronize, reopened]
+      - main
+
   workflow_dispatch:
     inputs:
       log_level:
