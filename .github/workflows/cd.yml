@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - main
+    paths:
+      - ".github/workflows/cd.yml"
+      - "Dockerfile"
 
   workflow_dispatch:
     inputs:
