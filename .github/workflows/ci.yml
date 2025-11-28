@@ -4,6 +4,9 @@ on:
     branches:
       - 1.0
 
+    paths:
+      - ".github/workflows/cd.yml"
+      - "Dockerfile"
     types: [opened, synchronize, reopened]
   workflow_dispatch:
     inputs:
