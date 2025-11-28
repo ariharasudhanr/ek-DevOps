@@ -5,6 +5,10 @@ on:
       - main
 
     types: [opened, synchronize, reopened]
+    paths:
+      - ".github/workflows/ci.yml"
+      - "Dockerfile"
+
   workflow_dispatch:
     inputs:
       log_level:
