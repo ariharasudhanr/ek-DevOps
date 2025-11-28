@@ -4,6 +4,10 @@ on:
     branches:
       - 1.0
 
+    paths:
+      - ".github/workflows/cd.yml"
+      - "Dockerfile"
+
   workflow_dispatch:
     inputs:
       log_level:
