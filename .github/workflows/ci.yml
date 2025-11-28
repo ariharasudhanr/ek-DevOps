@@ -4,62 +4,57 @@ on:
   push:
     branches:
       - main
-      - 'release/*'
-      - 'feature/*'
-  workflow_dispatch:      # Allows manual run on ANY branch
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
     inputs:
-      prerelease:
-        description: "Pre-release type (alpha, beta, rc). Leave empty to skip."
-        required: false
-        default: ""
+      log_level:
+        description: "Log level"
+        required: true
+        default: "INFO"
 
 jobs:
-  build:
+  build-and-push:
     runs-on: ubuntu-latest
-
     env:
-      VERSION_PREFIX_MAIN: "1.1"
-      VERSION_PREFIX_RELEASE: "1.0"
+      IMAGE_NAME: ariharasudhanr/ek-devops
+      REGISTRY: docker.io
+      TAG_ID: ${{ vars.DOCKER_IMAGE_PREFIX }}.${{ github.run_number }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Set TAG_ID
-        id: tag
-        run: |
-          BRANCH="${GITHUB_REF##*/}"
-          PRERELEASE="${{ github.event.inputs.prerelease }}"
-
-          if [[ "$BRANCH" == "main" ]]; then
-            TAG="${VERSION_PREFIX_MAIN}.${GITHUB_RUN_NUMBER}"
-          elif [[ "$BRANCH" == release/* ]]; then
-            REL="${BRANCH#release/}"
-            TAG="${REL}.${GITHUB_RUN_NUMBER}"
-          else
-            TAG="0.0.${GITHUB_RUN_NUMBER}"
-          fi
-
-          if [[ -n "$PRERELEASE" ]]; then
-            TAG="${TAG}-${PRERELEASE}.1"
-          fi
-
-          echo "TAG_ID=$TAG" >> $GITHUB_OUTPUT
-          echo "Generated TAG: $TAG"
-
-      - name: Build Docker image
-        run: |
-          docker build -t myrepo/myapp:${{ steps.tag.outputs.TAG_ID }} .
-
-      - name: Login to registry
-        run: |
-          echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login myrepo --username ${{ secrets.REGISTRY_USER }} --password-stdin
-
-      - name: Push image
-        run: docker push myrepo/myapp:${{ steps.tag.outputs.TAG_ID }}
-
-      - name: Upload artifact (optional)
-        uses: actions/upload-artifact@v4
         with:
-          name: build-output
-          path: .
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: docker.io
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: |
+            docker.io/${{ env.IMAGE_NAME }}:${{ env.TAG_ID }}
+            docker.io/${{ env.IMAGE_NAME }}:latest
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ env.TAG_ID }}
+
+      - name: Verify image on Docker Hub
+        run: |
+          docker pull docker.io/${{ env.IMAGE_NAME }}:${{ env.TAG_ID }}
+          docker pull docker.io/${{ env.IMAGE_NAME }}:latest
+          echo "Image successfully built and pushed to Docker Hub"
