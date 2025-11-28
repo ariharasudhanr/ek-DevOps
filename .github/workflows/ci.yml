@@ -1,13 +1,12 @@
 name: CI Pipeline
 on:
   pull_request:
+    types: [opened, reopened, synchronize]
+    paths:
+      - ".github/workflows/cd.yml"
+      - "Dockerfile"
     branches:
       - main
-
-    types: [opened, synchronize, reopened]
-    paths:
-      - ".github/workflows/ci.yml"
-      - "Dockerfile"
 
   workflow_dispatch:
     inputs:
