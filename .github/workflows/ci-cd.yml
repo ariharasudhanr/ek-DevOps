@@ -8,19 +8,19 @@ on:
     branches:
       - 1.0
     types: [opened, synchronize, reopened]
-
   workflow_dispatch:
     inputs:
       log_level:
         description: "Log level"
         required: true
         default: "INFO"
+
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
     env:
-      IMAGE_NAME: devops/ek-devops
-      REGISTRY: docker.io              # Official Docker Hub registry domain
+      IMAGE_NAME: ariharasudhanr/ek-devops
+      REGISTRY: docker.io
       TAG_ID: ${{ vars.DOCKER_IMAGE_PREFIX }}${{ github.run_number }}
 
     steps:
@@ -44,7 +44,7 @@ jobs:
         with:
           context: .
           push: true
-          platforms: linux/amd64,linux/arm64   # Optional: multi-platform build (recommended)
+          platforms: linux/amd64,linux/arm64
           tags: |
             docker.io/${{ env.IMAGE_NAME }}:${{ env.TAG_ID }}
             docker.io/${{ env.IMAGE_NAME }}:latest
