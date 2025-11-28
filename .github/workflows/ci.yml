@@ -2,7 +2,7 @@ name: CI Pipeline
 on:
   pull_request:
     branches:
-      - main
+      - 1.0
 
     types: [opened, synchronize, reopened]
   workflow_dispatch:
