@@ -1,0 +1,54 @@
+name: CI-CD Pipeline
+
+on:
+  push:
+    branches:
+      - 1.0
+  pull_request:
+    branches:
+      - 1.0
+    types: [opened, synchronize, reopened]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME: devops/ek-devops
+      REGISTRY: docker.io              # Official Docker Hub registry domain
+      TAG_ID: ${{ vars.DOCKER_IMAGE_PREFIX }}${{ github.run_number }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64   # Optional: multi-platform build (recommended)
+          tags: |
+            docker.io/${{ env.IMAGE_NAME }}:${{ env.TAG_ID }}
+            docker.io/${{ env.IMAGE_NAME }}:latest
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ env.TAG_ID }}
+
+      - name: Verify image on Docker Hub
+        run: |
+          docker pull docker.io/${{ env.IMAGE_NAME }}:${{ env.TAG_ID }}
+          docker pull docker.io/${{ env.IMAGE_NAME }}:latest
+          echo "Image successfully built and pushed to Docker Hub"
