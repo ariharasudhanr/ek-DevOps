@@ -1,4 +1,4 @@
-#dockerfile
+#dockerfile (issue: 26)
 FROM ubuntu:latest
 RUN apt-get update && apt-get install -y apache2 
 WORKDIR /var/www/html
