@@ -6,7 +6,7 @@ on:
       - ".github/workflows/ci.yml"
       - "Dockerfile"
     branches:
-      - main
+      - 1.0.x
 
   workflow_dispatch:
     inputs:
