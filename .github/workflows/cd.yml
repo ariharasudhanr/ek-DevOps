@@ -5,7 +5,7 @@ on:
       - ".github/workflows/cd.yml"
       - "Dockerfile"
     branches:
-      - 1.0.x
+      - 1.1.x
 
   workflow_dispatch:
     inputs:
