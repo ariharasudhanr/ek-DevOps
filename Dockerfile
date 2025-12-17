@@ -21,5 +21,33 @@ EXPOSE 80
 # -xyz backport test comment
 # -xyz-xyz backport test comment
 # no-xxx
+
 #fix from 1.0.x(with --ff )
 #fix from 1.0.x with no-ff( with no--ff )
+
+
+#add backport comment for testing approach
+
+###Apply fix: Add backport comment###
+
+###Add push first for backport check###
+
+##Add push first for backport check##
+
+###Push-first with commit in Original PR/Issue Number###
+
+###add -x in cherry-pick
+
+
+###add -x in cherry-pick###
+
+###add -x in cherry-pick###
+
+#merge-forward Fix
+
+
+#1.0.x merge-forward
+
+#all 1.0.x changes into main
+
+#backport: critical-fix
